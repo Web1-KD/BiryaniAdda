@@ -1,0 +1,2437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biryani Adda - Billing Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .category-card { transition: all 0.3s ease; }
+        .category-card:hover { transform: translateY(-2px); }
+        .item-row:hover { background-color: #f8fafc; }
+        .bill-item { animation: slideIn 0.3s ease; }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .print-hidden { display: none; }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .mobile-stack { flex-direction: column !important; }
+            .mobile-full { width: 100% !important; }
+            .mobile-text-sm { font-size: 0.875rem !important; }
+            .mobile-p-2 { padding: 0.5rem !important; }
+            .mobile-gap-2 { gap: 0.5rem !important; }
+            .mobile-hidden { display: none !important; }
+            .mobile-block { display: block !important; }
+        }
+        
+        @media (max-width: 640px) {
+            .sm-text-xs { font-size: 0.75rem !important; }
+            .sm-p-1 { padding: 0.25rem !important; }
+            .sm-gap-1 { gap: 0.25rem !important; }
+        }
+        
+        /* POS Thermal Printer Styles */
+        @media print {
+            /* Hide everything except the receipt */
+            * {
+                visibility: hidden !important;
+            }
+            
+            .pos-receipt, .pos-receipt * {
+                visibility: visible !important;
+            }
+            
+            /* 80mm Thermal Paper Format */
+            @page {
+                size: 80mm auto;
+                margin: 0;
+            }
+            
+            body {
+                background: white !important;
+                font-family: 'Courier New', monospace !important;
+                font-size: 11px !important;
+                line-height: 1.3 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                color: black !important;
+            }
+            
+            .pos-receipt {
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 80mm !important;
+                padding: 3mm !important;
+                margin: 0 !important;
+                background: white !important;
+                display: block !important;
+                box-sizing: border-box !important;
+            }
+            
+            .pos-header {
+                text-align: center !important;
+                border-bottom: 1px dashed #000 !important;
+                padding-bottom: 3mm !important;
+                margin-bottom: 3mm !important;
+            }
+            
+            .pos-title {
+                font-size: 18px !important;
+                font-weight: bold !important;
+                margin: 0 0 2mm 0 !important;
+                letter-spacing: 1px !important;
+            }
+            
+            .pos-subtitle {
+                font-size: 9px !important;
+                margin: 0.5mm 0 !important;
+                line-height: 1.2 !important;
+            }
+            
+            .pos-customer {
+                margin: 3mm 0 !important;
+                font-size: 10px !important;
+                line-height: 1.4 !important;
+            }
+            
+            .pos-items {
+                border-bottom: 1px dashed #000 !important;
+                padding-bottom: 3mm !important;
+                margin-bottom: 3mm !important;
+            }
+            
+            .pos-item-header {
+                display: flex !important;
+                justify-content: space-between !important;
+                font-weight: bold !important;
+                font-size: 10px !important;
+                border-bottom: 1px solid #000 !important;
+                padding-bottom: 1mm !important;
+                margin-bottom: 2mm !important;
+            }
+            
+            .pos-item {
+                display: flex !important;
+                justify-content: space-between !important;
+                margin: 1.5mm 0 !important;
+                font-size: 10px !important;
+                align-items: flex-start !important;
+            }
+            
+            .pos-item-name {
+                flex: 1 !important;
+                padding-right: 3mm !important;
+                word-wrap: break-word !important;
+                max-width: 45mm !important;
+            }
+            
+            .pos-item-qty {
+                width: 12mm !important;
+                text-align: center !important;
+                flex-shrink: 0 !important;
+            }
+            
+            .pos-item-price {
+                width: 18mm !important;
+                text-align: right !important;
+                flex-shrink: 0 !important;
+                font-weight: bold !important;
+            }
+            
+            .pos-subtotal {
+                border-top: 1px dashed #000 !important;
+                padding-top: 2mm !important;
+                margin-top: 2mm !important;
+            }
+            
+            .pos-total-line {
+                display: flex !important;
+                justify-content: space-between !important;
+                margin: 1mm 0 !important;
+                font-size: 10px !important;
+            }
+            
+            .pos-grand-total {
+                display: flex !important;
+                justify-content: space-between !important;
+                font-size: 14px !important;
+                font-weight: bold !important;
+                border-top: 2px solid #000 !important;
+                border-bottom: 2px solid #000 !important;
+                padding: 2mm 0 !important;
+                margin: 3mm 0 !important;
+            }
+            
+            .pos-footer {
+                text-align: center !important;
+                font-size: 9px !important;
+                margin-top: 3mm !important;
+                border-top: 1px dashed #000 !important;
+                padding-top: 3mm !important;
+                line-height: 1.3 !important;
+            }
+            
+            .pos-separator {
+                border-bottom: 1px dashed #000 !important;
+                margin: 2mm 0 !important;
+                height: 1px !important;
+            }
+            
+            .pos-center {
+                text-align: center !important;
+            }
+            
+            .pos-bold {
+                font-weight: bold !important;
+            }
+        }
+        
+        /* ESC/POS Command Support */
+        .esc-pos-commands {
+            display: none;
+        }
+        
+        /* Thermal Printer Specific Styles */
+        .thermal-print {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.2;
+            width: 384px; /* 48 characters at 8px per char */
+            margin: 0 auto;
+            background: white;
+            color: black;
+        }
+        
+        .thermal-header {
+            text-align: center;
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        
+        .thermal-line {
+            border-bottom: 1px dashed #000;
+            margin: 5px 0;
+        }
+        
+        .thermal-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 2px 0;
+        }
+        
+        .thermal-total {
+            font-weight: bold;
+            font-size: 14px;
+            border-top: 2px solid #000;
+            border-bottom: 2px solid #000;
+            padding: 5px 0;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-orange-50 to-red-50 min-h-screen">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-orange-600 to-red-600 text-white p-4 md:p-6 shadow-lg">
+        <div class="max-w-7xl mx-auto">
+            <h1 class="text-2xl md:text-3xl font-bold mb-2">🍛 Biryani Adda</h1>
+            <p class="text-orange-100 text-xs md:text-sm">Shop no 1, Amar Gian Chs., Opp. St. Workshop, Khopat, Thane Maharashtra - 400601</p>
+            <p class="text-orange-100 text-xs md:text-sm">📞 8850227915 / 8652825607</p>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto p-3 md:p-6">
+        <!-- Navigation Tabs -->
+        <div class="mb-4 md:mb-6">
+            <div class="flex space-x-2 md:space-x-4 border-b border-gray-200 overflow-x-auto">
+                <button onclick="showSection('billing')" id="billingTab" class="nav-tab px-3 md:px-4 py-2 font-medium text-orange-600 border-b-2 border-orange-600 whitespace-nowrap text-sm md:text-base">
+                    🧾 <span class="hidden sm:inline">Billing</span>
+                </button>
+                <button onclick="showSection('reports')" id="reportsTab" class="nav-tab px-3 md:px-4 py-2 font-medium text-gray-500 hover:text-gray-700 whitespace-nowrap text-sm md:text-base">
+                    📊 <span class="hidden sm:inline">Reports</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Billing Section -->
+        <div id="billingSection" class="grid lg:grid-cols-3 gap-4 lg:gap-6">
+            <!-- Menu Section -->
+            <div class="lg:col-span-2 order-2 lg:order-1">
+                <div class="bg-white rounded-xl shadow-lg p-4 md:p-6">
+                    <h2 class="text-xl md:text-2xl font-bold text-gray-800 mb-4 md:mb-6 flex items-center">
+                        📋 <span class="hidden sm:inline">Menu Categories</span><span class="sm:hidden">Menu</span>
+                    </h2>
+                    
+                    <!-- Category Tabs -->
+                    <div class="flex flex-wrap gap-1 md:gap-2 mb-4 text-xs md:text-sm" id="categoryTabs">
+                        <button onclick="showCategory('veg-starters')" class="category-tab bg-orange-500 text-white px-2 md:px-4 py-1 md:py-2 rounded-lg font-medium transition-all hover:bg-orange-600">🥟 <span class="hidden sm:inline">Veg </span>Starters</button>
+                        <button onclick="showCategory('veg-biryani')" class="category-tab bg-gray-200 text-gray-700 px-2 md:px-4 py-1 md:py-2 rounded-lg font-medium transition-all hover:bg-gray-300">🥘 <span class="hidden sm:inline">Veg </span>Biryani</button>
+                        <button onclick="showCategory('veg-chinese')" class="category-tab bg-gray-200 text-gray-700 px-2 md:px-4 py-1 md:py-2 rounded-lg font-medium transition-all hover:bg-gray-300">🥡 Chinese</button>
+                        <button onclick="showCategory('drinks')" class="category-tab bg-gray-200 text-gray-700 px-2 md:px-4 py-1 md:py-2 rounded-lg font-medium transition-all hover:bg-gray-300">🥤 Drinks</button>
+                        <button onclick="showCategory('veg-main')" class="category-tab bg-gray-200 text-gray-700 px-2 md:px-4 py-1 md:py-2 rounded-lg font-medium transition-all hover:bg-gray-300">🥗 <span class="hidden sm:inline">Veg </span>Main</button>
+                        <button onclick="showCategory('veg-noodles')" class="category-tab bg-gray-200 text-gray-700 px-2 md:px-4 py-1 md:py-2 rounded-lg font-medium transition-all hover:bg-gray-300">🍜 <span class="hidden sm:inline">Veg </span>Noodles</button>
+                        <button onclick="showCategory('roti-naan')" class="category-tab bg-gray-200 text-gray-700 px-2 md:px-4 py-1 md:py-2 rounded-lg font-medium transition-all hover:bg-gray-300">🫓 Roti<span class="hidden sm:inline"> & Naan</span></button>
+                        <button onclick="showCategory('chicken-starters')" class="category-tab bg-gray-200 text-gray-700 px-2 md:px-4 py-1 md:py-2 rounded-lg font-medium transition-all hover:bg-gray-300">🍗 <span class="hidden sm:inline">Chicken </span>Starters</button>
+                        <button onclick="showCategory('chicken-main')" class="category-tab bg-gray-200 text-gray-700 px-2 md:px-4 py-1 md:py-2 rounded-lg font-medium transition-all hover:bg-gray-300">🍛 <span class="hidden sm:inline">Chicken </span>Main</button>
+                        <button onclick="showCategory('chicken-rice')" class="category-tab bg-gray-200 text-gray-700 px-2 md:px-4 py-1 md:py-2 rounded-lg font-medium transition-all hover:bg-gray-300">🍲 <span class="hidden sm:inline">Chicken </span>Rice</button>
+                        <button onclick="showCategory('soups')" class="category-tab bg-gray-200 text-gray-700 px-2 md:px-4 py-1 md:py-2 rounded-lg font-medium transition-all hover:bg-gray-300">🍲 Soups</button>
+                        <button onclick="showCategory('eggs')" class="category-tab bg-gray-200 text-gray-700 px-2 md:px-4 py-1 md:py-2 rounded-lg font-medium transition-all hover:bg-gray-300">🍳 Eggs<span class="hidden sm:inline"> & Pav</span></button>
+                        <button onclick="showCategory('mutton')" class="category-tab bg-gray-200 text-gray-700 px-2 md:px-4 py-1 md:py-2 rounded-lg font-medium transition-all hover:bg-gray-300">🥩 Mutton</button>
+                        <button onclick="showCategory('chicken-noodles')" class="category-tab bg-gray-200 text-gray-700 px-2 md:px-4 py-1 md:py-2 rounded-lg font-medium transition-all hover:bg-gray-300">🍜 <span class="hidden sm:inline">Chicken </span>Noodles</button>
+                        <button onclick="showCategory('thalis')" class="category-tab bg-gray-200 text-gray-700 px-2 md:px-4 py-1 md:py-2 rounded-lg font-medium transition-all hover:bg-gray-300">🍽️ Thalis</button>
+                        <button onclick="showCategory('fish')" class="category-tab bg-gray-200 text-gray-700 px-2 md:px-4 py-1 md:py-2 rounded-lg font-medium transition-all hover:bg-gray-300">🐟 Fish</button>
+                        <button onclick="showCategory('extras')" class="category-tab bg-gray-200 text-gray-700 px-2 md:px-4 py-1 md:py-2 rounded-lg font-medium transition-all hover:bg-gray-300">🍴 Extras</button>
+                    </div>
+
+
+
+                    <!-- Menu Items -->
+                    <div id="menuItems" class="space-y-2">
+                        <!-- Items will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bill Section -->
+            <div class="lg:col-span-1 order-1 lg:order-2">
+                <div class="bg-white rounded-xl shadow-lg p-4 md:p-6 lg:sticky lg:top-6">
+                    <h3 class="text-lg md:text-xl font-bold text-gray-800 mb-4 flex items-center justify-between">
+                        🧾 <span class="hidden sm:inline">Current </span>Bill
+                        <button onclick="clearBill()" class="text-xs md:text-sm bg-red-500 text-white px-2 md:px-3 py-1 rounded-lg hover:bg-red-600 transition-all no-print">Clear</button>
+                    </h3>
+                    
+                    <!-- Selected Table Indicator -->
+                    <div id="selectedTableIndicator" class="mb-4 p-3 bg-gradient-to-r from-green-100 to-green-50 border-l-4 border-green-500 rounded-lg hidden">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-green-700 font-bold text-lg">🍽️ Table <span id="currentTableNumber">-</span></span>
+                                <span class="text-green-600 text-sm">Currently Selected</span>
+                            </div>
+                            <button onclick="clearTableSelection()" class="text-xs bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700 transition-all">
+                                Switch Table
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Customer Info -->
+                    <div class="mb-4 no-print">
+                        <input type="text" id="customerName" placeholder="Customer Name" class="w-full p-2 md:p-3 border border-gray-300 rounded-lg mb-2 focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm md:text-base">
+                        <input type="text" id="customerPhone" placeholder="Phone Number" class="w-full p-2 md:p-3 border border-gray-300 rounded-lg mb-2 focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm md:text-base">
+                        
+                        <!-- Order Type Selection -->
+                        <div class="mb-2">
+                            <label class="block text-xs md:text-sm font-medium text-gray-700 mb-1">Order Type:</label>
+                            <select id="orderType" class="w-full p-2 md:p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm md:text-base" onchange="handleOrderTypeChange()">
+                                <option value="dine-in">🍽️ Dine In</option>
+                                <option value="takeaway">📦 Takeaway</option>
+                                <option value="delivery">🚚 Delivery</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Table Number (for dine-in) -->
+                        <div id="tableSection" class="mb-2">
+                            <label class="block text-xs md:text-sm font-medium text-gray-700 mb-1">Table Number:</label>
+                            <div class="grid grid-cols-3 gap-2">
+                                <button onclick="handleTableClick(1, event)" id="tableBtn1" class="table-btn bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600 transition-all text-sm font-medium relative">
+                                    Table 1
+                                    <span id="tableDot1" class="absolute -top-1 -right-1 w-3 h-3 bg-orange-500 rounded-full hidden"></span>
+                                </button>
+                                <button onclick="handleTableClick(2, event)" id="tableBtn2" class="table-btn bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600 transition-all text-sm font-medium relative">
+                                    Table 2
+                                    <span id="tableDot2" class="absolute -top-1 -right-1 w-3 h-3 bg-orange-500 rounded-full hidden"></span>
+                                </button>
+                                <button onclick="handleTableClick(3, event)" id="tableBtn3" class="table-btn bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600 transition-all text-sm font-medium relative">
+                                    Table 3
+                                    <span id="tableDot3" class="absolute -top-1 -right-1 w-3 h-3 bg-orange-500 rounded-full hidden"></span>
+                                </button>
+                                <button onclick="handleTableClick(4, event)" id="tableBtn4" class="table-btn bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600 transition-all text-sm font-medium relative">
+                                    Table 4
+                                    <span id="tableDot4" class="absolute -top-1 -right-1 w-3 h-3 bg-orange-500 rounded-full hidden"></span>
+                                </button>
+                                <button onclick="handleTableClick(5, event)" id="tableBtn5" class="table-btn bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600 transition-all text-sm font-medium relative">
+                                    Table 5
+                                    <span id="tableDot5" class="absolute -top-1 -right-1 w-3 h-3 bg-orange-500 rounded-full hidden"></span>
+                                </button>
+                                <button onclick="handleTableClick(6, event)" id="tableBtn6" class="table-btn bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600 transition-all text-sm font-medium relative">
+                                    Table 6
+                                    <span id="tableDot6" class="absolute -top-1 -right-1 w-3 h-3 bg-orange-500 rounded-full hidden"></span>
+                                </button>
+                            </div>
+                            <div class="mt-2 text-xs text-gray-600 text-center">
+                                💡 <strong>Ctrl+Click</strong> to open table in new tab
+                            </div>
+                        </div>
+                        
+                        <!-- Delivery Address (for delivery) -->
+                        <div id="deliverySection" class="mb-2 hidden">
+                            <label class="block text-xs md:text-sm font-medium text-gray-700 mb-1">Delivery Address:</label>
+                            <textarea id="deliveryAddress" placeholder="Enter full delivery address" class="w-full p-2 md:p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm md:text-base" rows="2"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Bill Items -->
+                    <div id="billItems" class="space-y-2 mb-4 max-h-60 overflow-y-auto">
+                        <p class="text-gray-500 text-center py-4">No items added yet</p>
+                    </div>
+
+                    <!-- Bill Summary -->
+                    <div class="border-t pt-4">
+                        <div class="flex justify-between text-lg font-bold">
+                            <span>Total:</span>
+                            <span id="total">₹0</span>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="mt-4 md:mt-6 space-y-2 no-print">
+                        <button onclick="showPrintPreview()" class="w-full bg-blue-600 text-white py-2 md:py-3 rounded-lg font-medium hover:bg-blue-700 transition-all text-sm md:text-base">
+                            👁️ Preview Bill
+                        </button>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="printBill()" class="bg-green-600 text-white py-2 md:py-3 rounded-lg font-medium hover:bg-green-700 transition-all text-sm md:text-base">
+                                🖨️ Print Bill
+                            </button>
+                            <button onclick="printThermalBill()" class="bg-purple-600 text-white py-2 md:py-3 rounded-lg font-medium hover:bg-purple-700 transition-all text-sm md:text-base">
+                                🧾 POS Print
+                            </button>
+                        </div>
+                        <button onclick="sendToPOSPrinter()" class="w-full bg-orange-600 text-white py-2 md:py-3 rounded-lg font-medium hover:bg-orange-700 transition-all text-sm md:text-base">
+                            📱 Send to POS
+                        </button>
+                    </div>
+
+                    <!-- Print Bill Content -->
+                    <div id="printBill" class="print-hidden pos-receipt">
+                        <div class="pos-header">
+                            <h2 class="pos-title">BIRYANI ADDA</h2>
+                            <p class="pos-subtitle">Shop no 1, Amar Gian Chs.</p>
+                            <p class="pos-subtitle">Opp. St. Workshop, Khopat</p>
+                            <p class="pos-subtitle">Thane Maharashtra - 400601</p>
+                            <p class="pos-subtitle">Ph: 8850227915 / 8652825607</p>
+                        </div>
+                        <div id="printCustomerInfo" class="pos-customer"></div>
+                        <div id="printBillItems" class="pos-items"></div>
+                        <div id="printBillSummary" class="pos-total"></div>
+                        <div class="pos-footer">
+                            <p>Thank you for visiting!</p>
+                            <p>Date: <span id="billDate"></span></p>
+                            <div class="pos-separator"></div>
+                            <p>Visit us again!</p>
+                        </div>
+                    </div>
+
+        </div>
+
+        <!-- Print Preview Modal -->
+        <div id="printPreviewModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+            <div class="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
+                <div class="p-4 border-b flex justify-between items-center">
+                    <h3 class="text-lg font-bold">🖨️ Print Preview</h3>
+                    <button onclick="closePrintPreview()" class="text-gray-500 hover:text-gray-700 text-xl">&times;</button>
+                </div>
+                
+                <!-- Preview Content -->
+                <div class="p-4">
+                    <div id="previewContent" class="border border-gray-300 p-4 bg-white font-mono text-sm" style="width: 80mm; margin: 0 auto; font-family: 'Courier New', monospace;">
+                        <!-- Preview will be populated here -->
+                    </div>
+                </div>
+                
+                <!-- Modal Actions -->
+                <div class="p-4 border-t bg-gray-50 flex space-x-2">
+                    <button onclick="printFromPreview()" class="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-green-700 transition-all">
+                        🖨️ Print Now
+                    </button>
+                    <button onclick="closePrintPreview()" class="flex-1 bg-gray-500 text-white py-2 px-4 rounded-lg font-medium hover:bg-gray-600 transition-all">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reports Section -->
+        <div id="reportsSection" class="hidden">
+            <div class="grid lg:grid-cols-2 gap-4 lg:gap-6">
+                <!-- Sales Summary -->
+                <div class="bg-white rounded-xl shadow-lg p-4 md:p-6">
+                    <h3 class="text-lg md:text-xl font-bold text-gray-800 mb-4 flex items-center">
+                        📈 <span class="hidden sm:inline">Sales </span>Summary
+                    </h3>
+                    
+                    <!-- Time Period Selector -->
+                    <div class="flex flex-wrap gap-1 md:gap-2 mb-4 text-xs md:text-sm">
+                        <button onclick="showSalesReport('today')" id="todayBtn" class="period-btn bg-orange-500 text-white px-3 py-2 rounded-lg font-medium text-sm">Today</button>
+                        <button onclick="showSalesReport('weekly')" id="weeklyBtn" class="period-btn bg-gray-200 text-gray-700 px-3 py-2 rounded-lg font-medium text-sm">Weekly</button>
+                        <button onclick="showSalesReport('monthly')" id="monthlyBtn" class="period-btn bg-gray-200 text-gray-700 px-3 py-2 rounded-lg font-medium text-sm">Monthly</button>
+                    </div>
+
+                    <!-- Sales Stats -->
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div class="bg-green-50 p-4 rounded-lg">
+                            <div class="text-2xl font-bold text-green-600" id="totalSales">₹0</div>
+                            <div class="text-sm text-green-700">Total Sales</div>
+                        </div>
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <div class="text-2xl font-bold text-blue-600" id="totalOrders">0</div>
+                            <div class="text-sm text-blue-700">Total Orders</div>
+                        </div>
+                    </div>
+
+                    <!-- Top Items -->
+                    <div class="mb-4">
+                        <h4 class="font-semibold text-gray-800 mb-2">🏆 Top Selling Items</h4>
+                        <div id="topItems" class="space-y-2">
+                            <p class="text-gray-500 text-center py-4">No sales data available</p>
+                        </div>
+                    </div>
+
+                    <!-- Export Button -->
+                    <button onclick="exportToExcel()" class="w-full bg-green-600 text-white py-2 rounded-lg font-medium hover:bg-green-700 transition-all">
+                        📊 Export to Excel
+                    </button>
+                </div>
+
+                <!-- Customer Data -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                        👥 Customer Data
+                    </h3>
+                    
+                    <!-- Customer Stats -->
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div class="bg-purple-50 p-4 rounded-lg">
+                            <div class="text-2xl font-bold text-purple-600" id="totalCustomers">0</div>
+                            <div class="text-sm text-purple-700">Total Customers</div>
+                        </div>
+                        <div class="bg-orange-50 p-4 rounded-lg">
+                            <div class="text-2xl font-bold text-orange-600" id="repeatCustomers">0</div>
+                            <div class="text-sm text-orange-700">Repeat Customers</div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Customers -->
+                    <div class="mb-4">
+                        <h4 class="font-semibold text-gray-800 mb-2">📞 Recent Customers</h4>
+                        <div id="recentCustomers" class="space-y-2 max-h-60 overflow-y-auto">
+                            <p class="text-gray-500 text-center py-4">No customer data available</p>
+                        </div>
+                    </div>
+
+                    <!-- Export Customer Data -->
+                    <button onclick="exportCustomerData()" class="w-full bg-purple-600 text-white py-2 rounded-lg font-medium hover:bg-purple-700 transition-all">
+                        👥 Export Customer Data
+                    </button>
+                </div>
+            </div>
+
+            <!-- Report Tabs -->
+            <div class="mt-6 bg-white rounded-xl shadow-lg p-6">
+                <div class="flex space-x-4 border-b border-gray-200 mb-6">
+                    <button onclick="showReportTab('sales')" id="salesReportTab" class="report-tab px-4 py-2 font-medium text-orange-600 border-b-2 border-orange-600">
+                        📋 Sales Report
+                    </button>
+                    <button onclick="showReportTab('items')" id="itemsReportTab" class="report-tab px-4 py-2 font-medium text-gray-500 hover:text-gray-700">
+                        📊 Item Sales Report
+                    </button>
+                </div>
+
+                <!-- Sales Report Tab -->
+                <div id="salesReportContent">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center justify-between">
+                        📋 Detailed Sales Report
+                        <div class="flex space-x-2">
+                            <input type="date" id="startDate" class="px-3 py-1 border border-gray-300 rounded text-sm">
+                            <input type="date" id="endDate" class="px-3 py-1 border border-gray-300 rounded text-sm">
+                            <button onclick="filterSalesByDate()" class="bg-orange-500 text-white px-3 py-1 rounded text-sm hover:bg-orange-600">Filter</button>
+                        </div>
+                    </h3>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-2 text-left">Bill No</th>
+                                    <th class="px-4 py-2 text-left">Date</th>
+                                    <th class="px-4 py-2 text-left">Customer</th>
+                                    <th class="px-4 py-2 text-left">Phone</th>
+                                    <th class="px-4 py-2 text-left">Order Type</th>
+                                    <th class="px-4 py-2 text-left">Items</th>
+                                    <th class="px-4 py-2 text-left">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="salesTableBody">
+                                <tr>
+                                    <td colspan="7" class="px-4 py-8 text-center text-gray-500">No sales data available</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Item Sales Report Tab -->
+                <div id="itemsReportContent" class="hidden">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center justify-between">
+                        📊 Item Sales Report
+                        <div class="flex space-x-2">
+                            <input type="date" id="itemStartDate" class="px-3 py-1 border border-gray-300 rounded text-sm">
+                            <input type="date" id="itemEndDate" class="px-3 py-1 border border-gray-300 rounded text-sm">
+                            <button onclick="filterItemSalesByDate()" class="bg-orange-500 text-white px-3 py-1 rounded text-sm hover:bg-orange-600">Filter</button>
+                            <button onclick="exportItemSales()" class="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600">📊 Export</button>
+                        </div>
+                    </h3>
+                    
+                    <!-- Item Sales Summary Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <div class="text-2xl font-bold text-blue-600" id="totalItemsSold">0</div>
+                            <div class="text-sm text-blue-700">Total Items Sold</div>
+                        </div>
+                        <div class="bg-green-50 p-4 rounded-lg">
+                            <div class="text-2xl font-bold text-green-600" id="totalItemRevenue">₹0</div>
+                            <div class="text-sm text-green-700">Total Item Revenue</div>
+                        </div>
+                        <div class="bg-purple-50 p-4 rounded-lg">
+                            <div class="text-2xl font-bold text-purple-600" id="uniqueItemsCount">0</div>
+                            <div class="text-sm text-purple-700">Unique Items Sold</div>
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-2 text-left cursor-pointer hover:bg-gray-100" onclick="sortItemTable('name')">
+                                        Item Name <span id="sortName">↕️</span>
+                                    </th>
+                                    <th class="px-4 py-2 text-left cursor-pointer hover:bg-gray-100" onclick="sortItemTable('category')">
+                                        Category <span id="sortCategory">↕️</span>
+                                    </th>
+                                    <th class="px-4 py-2 text-left cursor-pointer hover:bg-gray-100" onclick="sortItemTable('quantity')">
+                                        Qty Sold <span id="sortQuantity">↕️</span>
+                                    </th>
+                                    <th class="px-4 py-2 text-left cursor-pointer hover:bg-gray-100" onclick="sortItemTable('price')">
+                                        Unit Price <span id="sortPrice">↕️</span>
+                                    </th>
+                                    <th class="px-4 py-2 text-left cursor-pointer hover:bg-gray-100" onclick="sortItemTable('revenue')">
+                                        Total Revenue <span id="sortRevenue">↕️</span>
+                                    </th>
+                                    <th class="px-4 py-2 text-left cursor-pointer hover:bg-gray-100" onclick="sortItemTable('orders')">
+                                        Orders <span id="sortOrders">↕️</span>
+                                    </th>
+                                    <th class="px-4 py-2 text-left">Avg per Order</th>
+                                </tr>
+                            </thead>
+                            <tbody id="itemSalesTableBody">
+                                <tr>
+                                    <td colspan="7" class="px-4 py-8 text-center text-gray-500">No item sales data available</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Menu data
+        const menuData = {
+            'veg-starters': [
+                {name: 'Paneer Chilly Dry', price: 180},
+                {name: 'Veg Manchurian Dry', price: 150},
+                {name: 'Chilli Potato', price: 170},
+                {name: 'Tandoori Paneer', price: 170},
+                {name: 'Paneer Pahadi', price: 170},
+                {name: 'Cheese Ball', price: 160},
+                {name: 'Lasooni Paneer Kabab', price: 180}
+            ],
+            'veg-biryani': [
+                {name: 'Sabzi Dum Biryani', price: 145},
+                {name: 'Paneer Tikka Biryani', price: 170},
+                {name: 'Tava Pulav', price: 135},
+                {name: 'Paneer Pahadi Pulav', price: 160},
+                {name: 'Paneer Tikka Pulav', price: 160},
+                {name: 'Veg Mix Biryani', price: 160}
+            ],
+            'veg-chinese': [
+                {name: 'Veg Fried Rice', price: 140},
+                {name: 'Veg Schezwan Rice', price: 150},
+                {name: 'Veg Tripple Rice', price: 190},
+                {name: 'Veg Thousand Rice', price: 210},
+                {name: 'Veg Manchow Soup', price: 90},
+                {name: 'Veg Noodles Soup', price: 100}
+            ],
+            'drinks': [
+                {name: 'Lassi', price: 60},
+                {name: 'Chaas', price: 30},
+                {name: 'Gulab Jamun', price: 70},
+                {name: 'Mineral Water (Small)', price: 10},
+                {name: 'Mineral Water (Large)', price: 20},
+                {name: 'ThumbsUp (Glass Bottle)', price: 15},
+                {name: 'ThumbsUp (Plastic Bottle)', price: 20},
+                {name: 'Coca-Cola', price: 15},
+                {name: 'Sprite (Glass Bottle)', price: 15},
+                {name: 'Sprite (Plastic Bottle)', price: 20}
+            ],
+            'veg-main': [
+                {name: 'Paneer Tikka Masala', price: 190},
+                {name: 'Paneer Pahadi Masala', price: 185},
+                {name: 'Veg Kolhapuri', price: 180},
+                {name: 'Veg Handi', price: 180},
+                {name: 'Paneer Bhurji', price: 170},
+                {name: 'Paneer Kadai', price: 190},
+                {name: 'Lasooni Methi Paneer', price: 190},
+                {name: 'Dal Fry', price: 80},
+                {name: 'Dal Tadka', price: 100}
+            ],
+            'veg-noodles': [
+                {name: 'Veg Schezwan Noodles', price: 160},
+                {name: 'Veg Hakka Noodles', price: 150},
+                {name: 'Veg Peri Peri Noodles', price: 150},
+                {name: 'Chilli Mill Noodles', price: 140}
+            ],
+            'roti-naan': [
+                {name: 'Tandoori Roti', price: 15},
+                {name: 'Lacha Paratha', price: 40},
+                {name: 'Plain Naan', price: 40},
+                {name: 'Butter Garlic Naan', price: 65},
+                {name: 'Garlic Naan', price: 60},
+                {name: 'Butter Naan', price: 50},
+                {name: 'Cheese Naan', price: 70},
+                {name: 'Chapati', price: 12}
+            ],
+            'chicken-starters': [
+                {name: 'Chicken Crispy', price: 190},
+                {name: 'Chicken 65', price: 180},
+                {name: 'Chicken Lollipop', price: 170},
+                {name: 'Chicken Tikka', price: 200},
+                {name: 'Chicken Chilly', price: 185},
+                {name: 'Chicken Seekh', price: 200},
+                {name: 'Tandoori Chicken (Half)', price: 180},
+                {name: 'Tandoori Chicken (Full)', price: 340}
+            ],
+            'chicken-main': [
+                {name: 'Chicken Tikka Masala', price: 190},
+                {name: 'Butter Chicken', price: 200},
+                {name: 'Pahadi Chicken', price: 200},
+                {name: 'Chicken Handi (Half)', price: 325},
+                {name: 'Chicken Handi (Full)', price: 500},
+                {name: 'Chicken Masala', price: 210},
+                {name: 'Lasooni Chicken', price: 200},
+                {name: 'Chicken Kadai', price: 230},
+                {name: 'Chicken Kolhapuri', price: 220},
+                {name: 'Pahadi Chicken Masala', price: 220},
+                {name: 'Chicken Tandoori Masala', price: 250},
+                {name: 'Murg Masalam', price: 250},
+                {name: 'Chicken Patiala', price: 240},
+                {name: 'Chicken Dal Ghosht', price: 170}
+            ],
+            'chicken-rice': [
+                {name: 'Chicken Dum Biryani (Full)', price: 150},
+                {name: 'Chicken Dum Biryani (Half)', price: 90},
+                {name: 'Chicken Tikka Biryani', price: 160},
+                {name: 'Chicken Khepsa Rice (Half)', price: 500},
+                {name: 'Chicken Khepsa Rice (Full)', price: 700},
+                {name: 'Chicken Kheema Rice', price: 170},
+                {name: 'Chicken Tikka Pulav', price: 165},
+                {name: 'Pahadi Chicken Pulav', price: 165},
+                {name: 'Chicken Seekh Biryani', price: 220},
+                {name: 'Egg Biryani', price: 140},
+                {name: 'Chicken Tripple Rice', price: 220},
+                {name: 'Chicken Thousand Rice', price: 250},
+                {name: 'Chicken Chilly Rice', price: 200},
+                {name: 'Chicken Schezwan Rice', price: 175},
+                {name: 'Egg Schezwan Rice', price: 145},
+                {name: 'Egg Fried Rice', price: 135},
+                {name: 'Chicken Fried Rice (Full)', price: 150},
+                {name: 'Chicken Fried Rice (Half)', price: 100},
+                {name: 'Jeera Rice', price: 80},
+                {name: 'Plain Rice', price: 60},
+                {name: 'Paking Rice', price: 245}
+            ],
+            'soups': [
+                {name: 'Lasooni Methi Chicken', price: 220},
+                {name: 'Chicken Manchow Soup', price: 90},
+                {name: 'Chicken Schezwan Soup', price: 100},
+                {name: 'Chicken Noodles Soup', price: 110}
+            ],
+            'eggs': [
+                {name: 'Egg Masala', price: 150},
+                {name: 'Egg Bhurji', price: 110},
+                {name: 'Omlette Pav', price: 100},
+                {name: 'Chicken Kheema Pav', price: 160},
+                {name: 'Mutton Kheema Pav', price: 200},
+                {name: 'Pav', price: 15},
+                {name: 'Butter Pav', price: 20},
+                {name: 'Boiled Egg', price: 25}
+            ],
+            'mutton': [
+                {name: 'Mutton Kheema Pav', price: 200},
+                {name: 'Mutton Kheema Rice', price: 220},
+                {name: 'Mutton Dum Biryani', price: 220}
+            ],
+            'chicken-noodles': [
+                {name: 'Chicken Hakka Noodles', price: 180},
+                {name: 'Chicken Chilly Noodles', price: 190}
+            ],
+            'thalis': [
+                {name: 'Mutton Thali', price: 200},
+                {name: 'Chicken Thali', price: 140},
+                {name: 'Bangda Thali', price: 160},
+                {name: 'Pomfret Thali', price: 180},
+                {name: 'Egg Thali', price: 130},
+                {name: 'Veg Thali', price: 100}
+            ],
+            'fish': [
+                {name: 'Bangda Tava Fry (1pc)', price: 80},
+                {name: 'Bombil Tava Fry (3pcs)', price: 100},
+                {name: 'Pomfret Tava Fry (1pc)', price: 140},
+                {name: 'Prawns Masala', price: 140},
+                {name: 'Bangda Fish Curry', price: 150},
+                {name: 'Pomfret Fish Curry', price: 170}
+            ],
+            'extras': [
+                {name: 'Time Pass', price: 20}
+            ]
+        };
+
+        let currentBill = [];
+        let billCounter = 1;
+        let currentCategory = 'veg-starters';
+        let currentReportPeriod = 'today';
+        
+        // Data storage
+        let salesData = JSON.parse(localStorage.getItem('biryaniAddaSales') || '[]');
+        let customerData = JSON.parse(localStorage.getItem('biryaniAddaCustomers') || '{}');
+        
+        // Table management
+        let currentTable = null;
+        let tableBills = JSON.parse(localStorage.getItem('biryaniAddaTableBills') || '{}');
+
+        // Section navigation
+        function showSection(section) {
+            // Hide all sections
+            document.getElementById('billingSection').classList.add('hidden');
+            document.getElementById('reportsSection').classList.add('hidden');
+            
+            // Show selected section
+            document.getElementById(section + 'Section').classList.remove('hidden');
+            
+            // Update tab styles
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('text-orange-600', 'border-b-2', 'border-orange-600');
+                tab.classList.add('text-gray-500');
+            });
+            
+            if (section === 'billing') {
+                document.getElementById('billingTab').classList.add('text-orange-600', 'border-b-2', 'border-orange-600');
+                document.getElementById('billingTab').classList.remove('text-gray-500');
+            } else if (section === 'reports') {
+                document.getElementById('reportsTab').classList.add('text-orange-600', 'border-b-2', 'border-orange-600');
+                document.getElementById('reportsTab').classList.remove('text-gray-500');
+                updateReportsDisplay();
+            }
+        }
+
+        // Handle order type change
+        function handleOrderTypeChange() {
+            const orderType = document.getElementById('orderType').value;
+            const tableSection = document.getElementById('tableSection');
+            const deliverySection = document.getElementById('deliverySection');
+            
+            if (orderType === 'dine-in') {
+                tableSection.classList.remove('hidden');
+                deliverySection.classList.add('hidden');
+            } else if (orderType === 'delivery') {
+                tableSection.classList.add('hidden');
+                deliverySection.classList.remove('hidden');
+            } else {
+                tableSection.classList.add('hidden');
+                deliverySection.classList.add('hidden');
+            }
+        }
+
+
+
+        // Show category items
+        function showCategory(category) {
+            currentCategory = category;
+            
+            // Update active tab
+            document.querySelectorAll('.category-tab').forEach(tab => {
+                tab.classList.remove('bg-orange-500', 'text-white');
+                tab.classList.add('bg-gray-200', 'text-gray-700');
+            });
+            event.target.classList.remove('bg-gray-200', 'text-gray-700');
+            event.target.classList.add('bg-orange-500', 'text-white');
+
+            // Display items
+            const menuItems = document.getElementById('menuItems');
+            const items = menuData[category] || [];
+            
+            // Normal mode - clickable items
+            menuItems.innerHTML = items.map(item => `
+                <div class="item-row flex justify-between items-center p-3 border border-gray-200 rounded-lg cursor-pointer transition-all hover:bg-gray-50" onclick="addToBill('${item.name}', ${item.price})">
+                    <span class="font-medium text-gray-800">${item.name}</span>
+                    <span class="text-orange-600 font-bold">₹${item.price}</span>
+                </div>
+            `).join('');
+        }
+
+        // Handle table click - either select or open in new tab
+        function handleTableClick(tableNumber, event) {
+            // Check if Ctrl key is pressed (or Cmd on Mac)
+            if (event.ctrlKey || event.metaKey) {
+                // Open table in new tab
+                openTableTab(tableNumber);
+            } else {
+                // Regular table selection
+                selectTable(tableNumber);
+            }
+        }
+
+        // Table selection functions
+        function selectTable(tableNumber) {
+            // Save current bill to previous table if exists
+            if (currentTable && currentBill.length > 0) {
+                tableBills[currentTable] = {
+                    bill: [...currentBill],
+                    customerName: document.getElementById('customerName').value,
+                    customerPhone: document.getElementById('customerPhone').value
+                };
+                localStorage.setItem('biryaniAddaTableBills', JSON.stringify(tableBills));
+            }
+            
+            // Switch to new table
+            currentTable = tableNumber;
+            
+            // Load table's existing bill if any
+            if (tableBills[tableNumber]) {
+                currentBill = [...tableBills[tableNumber].bill];
+                document.getElementById('customerName').value = tableBills[tableNumber].customerName || '';
+                document.getElementById('customerPhone').value = tableBills[tableNumber].customerPhone || '';
+            } else {
+                currentBill = [];
+                document.getElementById('customerName').value = `Table ${tableNumber} Customer`;
+                document.getElementById('customerPhone').value = '';
+            }
+            
+            // Update UI
+            updateTableButtons();
+            updateTableIndicator();
+            updateBillDisplay();
+        }
+        
+        function updateTableButtons() {
+            // Reset all buttons
+            for (let i = 1; i <= 6; i++) {
+                const btn = document.getElementById(`tableBtn${i}`);
+                const dot = document.getElementById(`tableDot${i}`);
+                
+                btn.classList.remove('bg-green-500', 'bg-green-600');
+                btn.classList.add('bg-blue-500');
+                btn.classList.remove('hover:bg-green-600');
+                btn.classList.add('hover:bg-blue-600');
+                
+                // Show orange dot if table has pending orders
+                if (tableBills[i] && tableBills[i].bill.length > 0) {
+                    dot.classList.remove('hidden');
+                } else {
+                    dot.classList.add('hidden');
+                }
+            }
+            
+            // Highlight current table
+            if (currentTable) {
+                const currentBtn = document.getElementById(`tableBtn${currentTable}`);
+                currentBtn.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+                currentBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+            }
+        }
+        
+        function updateTableIndicator() {
+            const indicator = document.getElementById('selectedTableIndicator');
+            const tableNumber = document.getElementById('currentTableNumber');
+            
+            if (currentTable) {
+                indicator.classList.remove('hidden');
+                tableNumber.textContent = currentTable;
+            } else {
+                indicator.classList.add('hidden');
+            }
+        }
+        
+        function clearTableSelection() {
+            currentTable = null;
+            currentBill = [];
+            document.getElementById('customerName').value = '';
+            document.getElementById('customerPhone').value = '';
+            updateTableButtons();
+            updateTableIndicator();
+            updateBillDisplay();
+        }
+
+        // Add item to bill
+        function addToBill(itemName, price) {
+            // Check if table is selected for dine-in orders
+            const orderType = document.getElementById('orderType').value;
+            if (orderType === 'dine-in' && !currentTable) {
+                alert('Please select a table first!');
+                return;
+            }
+            
+            const existingItem = currentBill.find(item => item.name === itemName);
+            
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                currentBill.push({
+                    name: itemName,
+                    price: price,
+                    quantity: 1
+                });
+            }
+            
+            // Save to table bills if table is selected
+            if (currentTable) {
+                tableBills[currentTable] = {
+                    bill: [...currentBill],
+                    customerName: document.getElementById('customerName').value,
+                    customerPhone: document.getElementById('customerPhone').value
+                };
+                localStorage.setItem('biryaniAddaTableBills', JSON.stringify(tableBills));
+                updateTableButtons(); // Update orange dots
+            }
+            
+            updateBillDisplay();
+        }
+
+        // Remove item from bill
+        function removeFromBill(index) {
+            currentBill.splice(index, 1);
+            updateBillDisplay();
+        }
+
+        // Update quantity
+        function updateQuantity(index, change) {
+            currentBill[index].quantity += change;
+            if (currentBill[index].quantity <= 0) {
+                removeFromBill(index);
+            } else {
+                updateBillDisplay();
+            }
+        }
+
+        // Update bill display
+        function updateBillDisplay() {
+            const billItems = document.getElementById('billItems');
+            
+            if (currentBill.length === 0) {
+                billItems.innerHTML = '<p class="text-gray-500 text-center py-4">No items added yet</p>';
+            } else {
+                billItems.innerHTML = currentBill.map((item, index) => `
+                    <div class="bill-item flex justify-between items-center p-2 bg-gray-50 rounded-lg">
+                        <div class="flex-1">
+                            <div class="font-medium text-sm">${item.name}</div>
+                            <div class="text-xs text-gray-600">₹${item.price} each</div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="updateQuantity(${index}, -1)" class="w-6 h-6 bg-red-500 text-white rounded-full text-xs hover:bg-red-600">-</button>
+                            <span class="w-8 text-center text-sm font-medium">${item.quantity}</span>
+                            <button onclick="updateQuantity(${index}, 1)" class="w-6 h-6 bg-green-500 text-white rounded-full text-xs hover:bg-green-600">+</button>
+                        </div>
+                        <div class="ml-2 font-bold text-sm">₹${item.price * item.quantity}</div>
+                    </div>
+                `).join('');
+            }
+            
+            updateBillSummary();
+        }
+
+        // Update bill summary
+        function updateBillSummary() {
+            const total = currentBill.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            document.getElementById('total').textContent = `₹${total}`;
+        }
+
+        // Clear bill
+        function clearBill() {
+            const tableText = currentTable ? ` for Table ${currentTable}` : '';
+            if (confirm(`Are you sure you want to clear the bill${tableText}?`)) {
+                currentBill = [];
+                
+                // Clear from table bills if table is selected
+                if (currentTable) {
+                    delete tableBills[currentTable];
+                    localStorage.setItem('biryaniAddaTableBills', JSON.stringify(tableBills));
+                    updateTableButtons(); // Update orange dots
+                }
+                
+                updateBillDisplay();
+                document.getElementById('customerName').value = '';
+                document.getElementById('customerPhone').value = '';
+            }
+        }
+
+
+
+        // Print bill
+        function printBill() {
+            if (currentBill.length === 0) {
+                alert('Please add items to the bill first!');
+                return;
+            }
+            
+            const customerName = document.getElementById('customerName').value || 'Walk-in Customer';
+            const customerPhone = document.getElementById('customerPhone').value || 'N/A';
+            const orderType = document.getElementById('orderType').value;
+            const tableNumber = currentTable || document.getElementById('tableNumber')?.value;
+            const deliveryAddress = document.getElementById('deliveryAddress')?.value;
+            
+            const total = currentBill.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            
+            // Store sales data
+            const saleRecord = {
+                billNo: billCounter,
+                date: new Date().toISOString(),
+                customerName: customerName,
+                customerPhone: customerPhone,
+                orderType: orderType,
+                tableNumber: currentTable || tableNumber || null,
+                deliveryAddress: deliveryAddress || null,
+                items: [...currentBill],
+                subtotal: total,
+                tax: 0,
+                total: total
+            };
+            
+            salesData.push(saleRecord);
+            localStorage.setItem('biryaniAddaSales', JSON.stringify(salesData));
+            
+            // Store customer data
+            if (customerPhone !== 'N/A' && customerPhone.trim() !== '') {
+                if (!customerData[customerPhone]) {
+                    customerData[customerPhone] = {
+                        name: customerName,
+                        phone: customerPhone,
+                        firstVisit: new Date().toISOString(),
+                        totalOrders: 0,
+                        totalSpent: 0
+                    };
+                }
+                customerData[customerPhone].totalOrders++;
+                customerData[customerPhone].totalSpent += total;
+                customerData[customerPhone].lastVisit = new Date().toISOString();
+                localStorage.setItem('biryaniAddaCustomers', JSON.stringify(customerData));
+            }
+            
+            // Prepare bill data for printing
+            prepareBillData();
+            
+            // Increment bill counter and print
+            billCounter++;
+            window.print();
+            
+            // Clear bill after successful print
+            setTimeout(() => {
+                const tableText = currentTable ? ` for Table ${currentTable}` : '';
+                if (confirm(`Bill printed successfully! Clear the bill${tableText}?`)) {
+                    // Clear from table bills if table is selected
+                    if (currentTable) {
+                        delete tableBills[currentTable];
+                        localStorage.setItem('biryaniAddaTableBills', JSON.stringify(tableBills));
+                        updateTableButtons(); // Update orange dots
+                    }
+                    clearBill();
+                }
+            }, 1000);
+        }
+
+        // Print thermal bill (optimized for POS thermal printers)
+        function printThermalBill() {
+            if (currentBill.length === 0) {
+                alert('Please add items to the bill first!');
+                return;
+            }
+            
+            // Store the sale first
+            const customerName = document.getElementById('customerName').value || 'Walk-in Customer';
+            const customerPhone = document.getElementById('customerPhone').value || 'N/A';
+            const orderType = document.getElementById('orderType').value;
+            const tableNumber = currentTable || document.getElementById('tableNumber')?.value;
+            const deliveryAddress = document.getElementById('deliveryAddress')?.value;
+            const total = currentBill.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            
+            // Store sales data
+            const saleRecord = {
+                billNo: billCounter,
+                date: new Date().toISOString(),
+                customerName: customerName,
+                customerPhone: customerPhone,
+                orderType: orderType,
+                tableNumber: currentTable || tableNumber || null,
+                deliveryAddress: deliveryAddress || null,
+                items: [...currentBill],
+                subtotal: total,
+                tax: 0,
+                total: total
+            };
+            
+            salesData.push(saleRecord);
+            localStorage.setItem('biryaniAddaSales', JSON.stringify(salesData));
+            
+            // Store customer data
+            if (customerPhone !== 'N/A' && customerPhone.trim() !== '') {
+                if (!customerData[customerPhone]) {
+                    customerData[customerPhone] = {
+                        name: customerName,
+                        phone: customerPhone,
+                        firstVisit: new Date().toISOString(),
+                        totalOrders: 0,
+                        totalSpent: 0
+                    };
+                }
+                customerData[customerPhone].totalOrders++;
+                customerData[customerPhone].totalSpent += total;
+                customerData[customerPhone].lastVisit = new Date().toISOString();
+                localStorage.setItem('biryaniAddaCustomers', JSON.stringify(customerData));
+            }
+            
+            // Create thermal print window
+            const thermalWindow = window.open('', '_blank', 'width=400,height=600');
+            const currentDate = new Date();
+            const dateStr = currentDate.toLocaleDateString('en-IN');
+            const timeStr = currentDate.toLocaleTimeString('en-IN', { hour12: true });
+            
+            const thermalContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Thermal Receipt</title>
+                    <style>
+                        @page { 
+                            size: 80mm auto; 
+                            margin: 0; 
+                        }
+                        body { 
+                            font-family: 'Courier New', monospace; 
+                            font-size: 12px; 
+                            line-height: 1.3; 
+                            margin: 0; 
+                            padding: 5mm; 
+                            width: 70mm;
+                            background: white;
+                            color: black;
+                        }
+                        .center { text-align: center; }
+                        .bold { font-weight: bold; }
+                        .large { font-size: 16px; }
+                        .small { font-size: 10px; }
+                        .line { border-bottom: 1px dashed #000; margin: 3px 0; }
+                        .double-line { border-bottom: 2px solid #000; margin: 5px 0; }
+                        .item { display: flex; justify-content: space-between; margin: 1px 0; }
+                        .item-name { flex: 1; padding-right: 5px; }
+                        .item-qty { width: 20px; text-align: center; }
+                        .item-price { width: 50px; text-align: right; }
+                        .total-line { display: flex; justify-content: space-between; margin: 2px 0; }
+                        .grand-total { 
+                            display: flex; 
+                            justify-content: space-between; 
+                            font-weight: bold; 
+                            font-size: 14px; 
+                            border-top: 2px solid #000; 
+                            border-bottom: 2px solid #000; 
+                            padding: 3px 0; 
+                            margin: 5px 0; 
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="center bold large">BIRYANI ADDA</div>
+                    <div class="center small">Shop no 1, Amar Gian Chs.</div>
+                    <div class="center small">Opp. St. Workshop, Khopat</div>
+                    <div class="center small">Thane Maharashtra - 400601</div>
+                    <div class="center small">Ph: 8850227915 / 8652825607</div>
+                    <div class="line"></div>
+                    
+                    <div class="small">
+                        <div><strong>Bill No:</strong> ${String(billCounter).padStart(4, '0')}</div>
+                        <div><strong>Date:</strong> ${dateStr} ${timeStr}</div>
+                        <div><strong>Customer:</strong> ${customerName}</div>
+                        <div><strong>Phone:</strong> ${customerPhone}</div>
+                        ${orderType === 'dine-in' && tableNumber ? `<div><strong>Table:</strong> ${tableNumber}</div>` : ''}
+                        ${orderType === 'delivery' && deliveryAddress ? `<div><strong>Address:</strong> ${deliveryAddress.substring(0, 30)}${deliveryAddress.length > 30 ? '...' : ''}</div>` : ''}
+                        <div><strong>Order Type:</strong> ${orderType.charAt(0).toUpperCase() + orderType.slice(1).replace('-', ' ')}</div>
+                    </div>
+                    <div class="line"></div>
+                    
+                    <div class="item bold small">
+                        <span class="item-name">ITEM</span>
+                        <span class="item-qty">QTY</span>
+                        <span class="item-price">AMOUNT</span>
+                    </div>
+                    <div class="line"></div>
+                    
+                    ${currentBill.map(item => `
+                        <div class="item small">
+                            <span class="item-name">${item.name}</span>
+                            <span class="item-qty">${item.quantity}</span>
+                            <span class="item-price">₹${item.price * item.quantity}</span>
+                        </div>
+                    `).join('')}
+                    
+                    <div class="line"></div>
+                    <div class="total-line small">
+                        <span>Subtotal:</span>
+                        <span>₹${total}</span>
+                    </div>
+                    <div class="grand-total">
+                        <span>TOTAL:</span>
+                        <span>₹${total}</span>
+                    </div>
+                    
+                    <div class="center small" style="margin-top: 10px;">
+                        <div>Thank you for visiting!</div>
+                        <div>Date: ${dateStr} ${timeStr}</div>
+                        <div class="line"></div>
+                        <div>Visit us again!</div>
+                    </div>
+                </body>
+                </html>
+            `;
+            
+            thermalWindow.document.write(thermalContent);
+            thermalWindow.document.close();
+            
+            // Auto print after a short delay
+            setTimeout(() => {
+                thermalWindow.print();
+                thermalWindow.close();
+            }, 500);
+            
+            // Increment bill counter
+            billCounter++;
+            
+            // Clear bill after successful print
+            setTimeout(() => {
+                const tableText = currentTable ? ` for Table ${currentTable}` : '';
+                if (confirm(`Thermal receipt sent to printer! Clear the bill${tableText}?`)) {
+                    // Clear from table bills if table is selected
+                    if (currentTable) {
+                        delete tableBills[currentTable];
+                        localStorage.setItem('biryaniAddaTableBills', JSON.stringify(tableBills));
+                        updateTableButtons(); // Update orange dots
+                    }
+                    clearBill();
+                }
+            }, 1500);
+        }
+
+        // Generate ESC/POS commands for direct printer communication
+        function generateESCPOS() {
+            if (currentBill.length === 0) {
+                alert('Please add items to the bill first!');
+                return;
+            }
+            
+            const customerName = document.getElementById('customerName').value || 'Walk-in Customer';
+            const customerPhone = document.getElementById('customerPhone').value || 'N/A';
+            const orderType = document.getElementById('orderType').value;
+            const tableNumber = currentTable || document.getElementById('tableNumber')?.value;
+            const deliveryAddress = document.getElementById('deliveryAddress')?.value;
+            const total = currentBill.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            
+            const currentDate = new Date();
+            const dateStr = currentDate.toLocaleDateString('en-IN');
+            const timeStr = currentDate.toLocaleTimeString('en-IN', { hour12: true });
+            
+            // Generate ESC/POS command string
+            let escPosCommands = '';
+            
+            // Initialize printer
+            escPosCommands += '\x1B\x40'; // ESC @ - Initialize printer
+            
+            // Set character set
+            escPosCommands += '\x1B\x74\x00'; // ESC t 0 - Select character table
+            
+            // Center align and bold for header
+            escPosCommands += '\x1B\x61\x01'; // ESC a 1 - Center alignment
+            escPosCommands += '\x1B\x45\x01'; // ESC E 1 - Bold on
+            escPosCommands += '\x1D\x21\x11'; // GS ! 17 - Double height and width
+            escPosCommands += 'BIRYANI ADDA\n';
+            escPosCommands += '\x1D\x21\x00'; // GS ! 0 - Normal size
+            escPosCommands += '\x1B\x45\x00'; // ESC E 0 - Bold off
+            
+            // Restaurant details
+            escPosCommands += 'Shop no 1, Amar Gian Chs.\n';
+            escPosCommands += 'Opp. St. Workshop, Khopat\n';
+            escPosCommands += 'Thane Maharashtra - 400601\n';
+            escPosCommands += 'Ph: 8850227915 / 8652825607\n';
+            
+            // Separator line
+            escPosCommands += '\x1B\x61\x00'; // ESC a 0 - Left alignment
+            escPosCommands += '--------------------------------\n';
+            
+            // Bill details
+            escPosCommands += `Bill No: ${String(billCounter).padStart(4, '0')}\n`;
+            escPosCommands += `Date: ${dateStr} ${timeStr}\n`;
+            escPosCommands += `Customer: ${customerName}\n`;
+            escPosCommands += `Phone: ${customerPhone}\n`;
+            if (orderType === 'dine-in' && tableNumber) {
+                escPosCommands += `Table: ${tableNumber}\n`;
+            }
+            if (orderType === 'delivery' && deliveryAddress) {
+                escPosCommands += `Address: ${deliveryAddress.substring(0, 30)}${deliveryAddress.length > 30 ? '...' : ''}\n`;
+            }
+            escPosCommands += `Order Type: ${orderType.charAt(0).toUpperCase() + orderType.slice(1).replace('-', ' ')}\n`;
+            escPosCommands += '--------------------------------\n';
+            
+            // Items header
+            escPosCommands += '\x1B\x45\x01'; // Bold on
+            escPosCommands += 'ITEM                QTY   AMOUNT\n';
+            escPosCommands += '\x1B\x45\x00'; // Bold off
+            escPosCommands += '--------------------------------\n';
+            
+            // Items
+            currentBill.forEach(item => {
+                const itemName = item.name.substring(0, 18).padEnd(18);
+                const qty = String(item.quantity).padStart(3);
+                const amount = `₹${item.price * item.quantity}`.padStart(8);
+                escPosCommands += `${itemName} ${qty}   ${amount}\n`;
+            });
+            
+            escPosCommands += '--------------------------------\n';
+            
+            // Total
+            escPosCommands += `Subtotal:${`₹${total}`.padStart(23)}\n`;
+            escPosCommands += '================================\n';
+            escPosCommands += '\x1B\x45\x01'; // Bold on
+            escPosCommands += '\x1D\x21\x01'; // Double height
+            escPosCommands += `TOTAL:${`₹${total}`.padStart(25)}\n`;
+            escPosCommands += '\x1D\x21\x00'; // Normal size
+            escPosCommands += '\x1B\x45\x00'; // Bold off
+            escPosCommands += '================================\n';
+            
+            // Footer
+            escPosCommands += '\x1B\x61\x01'; // Center alignment
+            escPosCommands += '\nThank you for visiting!\n';
+            escPosCommands += `Date: ${dateStr} ${timeStr}\n`;
+            escPosCommands += '--------------------------------\n';
+            escPosCommands += 'Visit us again!\n\n\n';
+            
+            // Cut paper
+            escPosCommands += '\x1D\x56\x00'; // GS V 0 - Full cut
+            
+            // Create downloadable file with ESC/POS commands
+            const blob = new Blob([escPosCommands], { type: 'application/octet-stream' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `receipt_${String(billCounter).padStart(4, '0')}.pos`;
+            link.click();
+            URL.revokeObjectURL(url);
+            
+            // Also show commands in a modal for copying
+            showESCPOSModal(escPosCommands);
+            
+            // Store the sale
+            const saleRecord = {
+                billNo: billCounter,
+                date: new Date().toISOString(),
+                customerName: customerName,
+                customerPhone: customerPhone,
+                orderType: orderType,
+                tableNumber: currentTable || tableNumber || null,
+                deliveryAddress: deliveryAddress || null,
+                items: [...currentBill],
+                subtotal: total,
+                tax: 0,
+                total: total
+            };
+            
+            salesData.push(saleRecord);
+            localStorage.setItem('biryaniAddaSales', JSON.stringify(salesData));
+            
+            // Store customer data
+            if (customerPhone !== 'N/A' && customerPhone.trim() !== '') {
+                if (!customerData[customerPhone]) {
+                    customerData[customerPhone] = {
+                        name: customerName,
+                        phone: customerPhone,
+                        firstVisit: new Date().toISOString(),
+                        totalOrders: 0,
+                        totalSpent: 0
+                    };
+                }
+                customerData[customerPhone].totalOrders++;
+                customerData[customerPhone].totalSpent += total;
+                customerData[customerPhone].lastVisit = new Date().toISOString();
+                localStorage.setItem('biryaniAddaCustomers', JSON.stringify(customerData));
+            }
+            
+            billCounter++;
+        }
+
+        // Show ESC/POS commands modal
+        function showESCPOSModal(commands) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
+            modal.innerHTML = `
+                <div class="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                    <div class="p-4 border-b flex justify-between items-center">
+                        <h3 class="text-lg font-bold">📱 ESC/POS Commands Generated</h3>
+                        <button onclick="this.closest('.fixed').remove()" class="text-gray-500 hover:text-gray-700 text-xl">&times;</button>
+                    </div>
+                    <div class="p-4">
+                        <p class="text-sm text-gray-600 mb-4">
+                            ESC/POS commands have been generated and downloaded as a .pos file. 
+                            You can also copy the raw commands below for direct printer communication:
+                        </p>
+                        <textarea class="w-full h-64 p-3 border border-gray-300 rounded font-mono text-xs" readonly>${commands.replace(/[\x00-\x1F\x7F]/g, function(char) {
+                            return '\\x' + char.charCodeAt(0).toString(16).padStart(2, '0').toUpperCase();
+                        })}</textarea>
+                        <div class="mt-4 flex space-x-2">
+                            <button onclick="navigator.clipboard.writeText('${commands.replace(/'/g, "\\'")}').then(() => alert('Commands copied to clipboard!'))" class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700">
+                                📋 Copy Commands
+                            </button>
+                            <button onclick="this.closest('.fixed').remove()" class="flex-1 bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600">
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        // Reports functions
+        function showSalesReport(period) {
+            currentReportPeriod = period;
+            
+            // Update active period button
+            document.querySelectorAll('.period-btn').forEach(btn => {
+                btn.classList.remove('bg-orange-500', 'text-white');
+                btn.classList.add('bg-gray-200', 'text-gray-700');
+            });
+            document.getElementById(period + 'Btn').classList.add('bg-orange-500', 'text-white');
+            document.getElementById(period + 'Btn').classList.remove('bg-gray-200', 'text-gray-700');
+            
+            updateReportsDisplay();
+        }
+
+        // Enhanced POS printing with better ESC/POS commands
+        function sendToPOSPrinter() {
+            if (currentBill.length === 0) {
+                alert('Please add items to the bill first!');
+                return;
+            }
+
+            const customerName = document.getElementById('customerName').value || 'Walk-in Customer';
+            const customerPhone = document.getElementById('customerPhone').value || 'N/A';
+            const orderType = document.getElementById('orderType').value;
+            const tableNumber = currentTable || document.getElementById('tableNumber')?.value;
+            const deliveryAddress = document.getElementById('deliveryAddress')?.value;
+            const total = currentBill.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            
+            const currentDate = new Date();
+            const dateStr = currentDate.toLocaleDateString('en-IN');
+            const timeStr = currentDate.toLocaleTimeString('en-IN', { hour12: true });
+
+            // Create enhanced ESC/POS command sequence
+            const ESC = '\x1B';
+            const GS = '\x1D';
+            const LF = '\x0A';
+            const CR = '\x0D';
+            
+            let posData = '';
+            
+            // Initialize printer
+            posData += ESC + '@'; // Initialize
+            posData += ESC + 't' + '\x00'; // Select character table
+            
+            // Header - Center aligned, bold, double size
+            posData += ESC + 'a' + '\x01'; // Center align
+            posData += ESC + 'E' + '\x01'; // Bold on
+            posData += GS + '!' + '\x11'; // Double height and width
+            posData += 'BIRYANI ADDA' + LF;
+            posData += GS + '!' + '\x00'; // Normal size
+            posData += ESC + 'E' + '\x00'; // Bold off
+            
+            // Restaurant details
+            posData += 'Shop no 1, Amar Gian Chs.' + LF;
+            posData += 'Opp. St. Workshop, Khopat' + LF;
+            posData += 'Thane Maharashtra - 400601' + LF;
+            posData += 'Ph: 8850227915 / 8652825607' + LF;
+            
+            // Separator
+            posData += ESC + 'a' + '\x00'; // Left align
+            posData += '================================' + LF;
+            
+            // Bill details
+            posData += 'Bill No: ' + String(billCounter).padStart(4, '0') + LF;
+            posData += 'Date: ' + dateStr + ' ' + timeStr + LF;
+            posData += 'Customer: ' + customerName + LF;
+            posData += 'Phone: ' + customerPhone + LF;
+            
+            if (orderType === 'dine-in' && tableNumber) {
+                posData += 'Table: ' + tableNumber + LF;
+            }
+            if (orderType === 'delivery' && deliveryAddress) {
+                posData += 'Address: ' + deliveryAddress.substring(0, 32) + LF;
+                if (deliveryAddress.length > 32) {
+                    posData += '         ' + deliveryAddress.substring(32, 64) + LF;
+                }
+            }
+            posData += 'Order Type: ' + orderType.charAt(0).toUpperCase() + orderType.slice(1).replace('-', ' ') + LF;
+            posData += '================================' + LF;
+            
+            // Items header
+            posData += ESC + 'E' + '\x01'; // Bold on
+            posData += 'ITEM                QTY   AMOUNT' + LF;
+            posData += ESC + 'E' + '\x00'; // Bold off
+            posData += '--------------------------------' + LF;
+            
+            // Items
+            currentBill.forEach(item => {
+                const itemName = item.name.length > 18 ? item.name.substring(0, 18) : item.name.padEnd(18);
+                const qty = String(item.quantity).padStart(3);
+                const amount = String(item.price * item.quantity).padStart(8);
+                posData += itemName + ' ' + qty + '   ₹' + amount + LF;
+            });
+            
+            posData += '--------------------------------' + LF;
+            
+            // Total section
+            posData += 'Subtotal:' + String(total).padStart(23) + LF;
+            posData += '================================' + LF;
+            posData += ESC + 'E' + '\x01'; // Bold on
+            posData += GS + '!' + '\x01'; // Double height
+            posData += 'TOTAL:' + ('₹' + total).padStart(26) + LF;
+            posData += GS + '!' + '\x00'; // Normal size
+            posData += ESC + 'E' + '\x00'; // Bold off
+            posData += '================================' + LF;
+            
+            // Footer
+            posData += ESC + 'a' + '\x01'; // Center align
+            posData += LF + 'Thank you for visiting!' + LF;
+            posData += 'Visit us again!' + LF;
+            posData += '--------------------------------' + LF;
+            posData += dateStr + ' ' + timeStr + LF;
+            posData += LF + LF + LF;
+            
+            // Cut paper
+            posData += GS + 'V' + '\x00'; // Full cut
+            
+            // Try to send to printer via different methods
+            if (navigator.serial) {
+                // Web Serial API (Chrome/Edge)
+                sendViaWebSerial(posData);
+            } else if (window.chrome && window.chrome.usb) {
+                // Chrome USB API
+                sendViaUSB(posData);
+            } else {
+                // Fallback - download as file and show instructions
+                downloadPOSFile(posData);
+            }
+            
+            // Store the sale
+            storeSaleData(customerName, customerPhone, orderType, tableNumber, deliveryAddress, total);
+        }
+
+        // Web Serial API implementation
+        async function sendViaWebSerial(posData) {
+            try {
+                const port = await navigator.serial.requestPort();
+                await port.open({ baudRate: 9600 });
+                
+                const writer = port.writable.getWriter();
+                const encoder = new TextEncoder();
+                await writer.write(encoder.encode(posData));
+                writer.releaseLock();
+                await port.close();
+                
+                alert('Receipt sent to POS printer successfully!');
+                billCounter++;
+                clearBillAfterPrint();
+            } catch (error) {
+                console.error('Serial printing failed:', error);
+                downloadPOSFile(posData);
+            }
+        }
+
+        // USB API implementation
+        async function sendViaUSB(posData) {
+            try {
+                const device = await navigator.usb.requestDevice({
+                    filters: [
+                        { vendorId: 0x04b8 }, // Epson
+                        { vendorId: 0x0519 }, // Star Micronics
+                        { vendorId: 0x154f }, // Wincor Nixdorf
+                        { vendorId: 0x0fe6 }, // ICS Advent
+                    ]
+                });
+                
+                await device.open();
+                await device.selectConfiguration(1);
+                await device.claimInterface(0);
+                
+                const encoder = new TextEncoder();
+                const data = encoder.encode(posData);
+                await device.transferOut(1, data);
+                
+                await device.close();
+                alert('Receipt sent to POS printer successfully!');
+                billCounter++;
+                clearBillAfterPrint();
+            } catch (error) {
+                console.error('USB printing failed:', error);
+                downloadPOSFile(posData);
+            }
+        }
+
+        // Download POS file as fallback
+        function downloadPOSFile(posData) {
+            const blob = new Blob([posData], { type: 'application/octet-stream' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `receipt_${String(billCounter).padStart(4, '0')}.pos`;
+            link.click();
+            URL.revokeObjectURL(url);
+            
+            // Show instructions modal
+            showPOSInstructions(posData);
+            
+            billCounter++;
+            clearBillAfterPrint();
+        }
+
+        // Show POS printing instructions
+        function showPOSInstructions(posData) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
+            modal.innerHTML = `
+                <div class="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                    <div class="p-4 border-b flex justify-between items-center">
+                        <h3 class="text-lg font-bold">🖨️ POS Printer Instructions</h3>
+                        <button onclick="this.closest('.fixed').remove()" class="text-gray-500 hover:text-gray-700 text-xl">&times;</button>
+                    </div>
+                    <div class="p-4">
+                        <div class="mb-4 p-4 bg-blue-50 border-l-4 border-blue-500 rounded">
+                            <h4 class="font-bold text-blue-800 mb-2">✅ Receipt File Downloaded!</h4>
+                            <p class="text-blue-700 text-sm">The receipt has been saved as a .pos file. Here's how to print it:</p>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div class="border rounded-lg p-4">
+                                <h5 class="font-bold text-gray-800 mb-2">📱 Method 1: Mobile POS App</h5>
+                                <ol class="text-sm text-gray-600 space-y-1 list-decimal list-inside">
+                                    <li>Transfer the .pos file to your phone</li>
+                                    <li>Open your POS printer app (like "Thermal Printer" or "POS Printer")</li>
+                                    <li>Select "Print File" and choose the downloaded .pos file</li>
+                                    <li>Make sure your printer is connected via Bluetooth/USB</li>
+                                </ol>
+                            </div>
+                            
+                            <div class="border rounded-lg p-4">
+                                <h5 class="font-bold text-gray-800 mb-2">💻 Method 2: Windows/Mac</h5>
+                                <ol class="text-sm text-gray-600 space-y-1 list-decimal list-inside">
+                                    <li>Install your POS printer drivers</li>
+                                    <li>Use command: <code class="bg-gray-100 px-1 rounded">copy receipt_xxxx.pos COM1</code> (Windows)</li>
+                                    <li>Or: <code class="bg-gray-100 px-1 rounded">cat receipt_xxxx.pos > /dev/ttyUSB0</code> (Linux/Mac)</li>
+                                    <li>Replace COM1/ttyUSB0 with your printer's port</li>
+                                </ol>
+                            </div>
+                            
+                            <div class="border rounded-lg p-4">
+                                <h5 class="font-bold text-gray-800 mb-2">🌐 Method 3: Web Serial (Chrome)</h5>
+                                <p class="text-sm text-gray-600 mb-2">For direct printing, use Chrome browser:</p>
+                                <button onclick="sendViaWebSerial('${posData.replace(/'/g, "\\'")}'); this.closest('.fixed').remove();" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                                    🖨️ Try Direct Print
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4 p-3 bg-yellow-50 border-l-4 border-yellow-400 rounded">
+                            <p class="text-yellow-800 text-sm">
+                                <strong>💡 Tip:</strong> For best results, use a thermal printer with 80mm paper width. 
+                                Common brands: Epson TM-T20, Star TSP143, Bixolon SRP-350.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="p-4 border-t bg-gray-50 flex justify-end">
+                        <button onclick="this.closest('.fixed').remove()" class="bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        // Store sale data (extracted for reuse)
+        function storeSaleData(customerName, customerPhone, orderType, tableNumber, deliveryAddress, total) {
+            const saleRecord = {
+                billNo: billCounter,
+                date: new Date().toISOString(),
+                customerName: customerName,
+                customerPhone: customerPhone,
+                orderType: orderType,
+                tableNumber: currentTable || tableNumber || null,
+                deliveryAddress: deliveryAddress || null,
+                items: [...currentBill],
+                subtotal: total,
+                tax: 0,
+                total: total
+            };
+            
+            salesData.push(saleRecord);
+            localStorage.setItem('biryaniAddaSales', JSON.stringify(salesData));
+            
+            // Store customer data
+            if (customerPhone !== 'N/A' && customerPhone.trim() !== '') {
+                if (!customerData[customerPhone]) {
+                    customerData[customerPhone] = {
+                        name: customerName,
+                        phone: customerPhone,
+                        firstVisit: new Date().toISOString(),
+                        totalOrders: 0,
+                        totalSpent: 0
+                    };
+                }
+                customerData[customerPhone].totalOrders++;
+                customerData[customerPhone].totalSpent += total;
+                customerData[customerPhone].lastVisit = new Date().toISOString();
+                localStorage.setItem('biryaniAddaCustomers', JSON.stringify(customerData));
+            }
+        }
+
+        // Clear bill after successful print
+        function clearBillAfterPrint() {
+            setTimeout(() => {
+                const tableText = currentTable ? ` for Table ${currentTable}` : '';
+                if (confirm(`Receipt processed successfully! Clear the bill${tableText}?`)) {
+                    if (currentTable) {
+                        delete tableBills[currentTable];
+                        localStorage.setItem('biryaniAddaTableBills', JSON.stringify(tableBills));
+                        updateTableButtons();
+                    }
+                    currentBill = [];
+                    updateBillDisplay();
+                    document.getElementById('customerName').value = '';
+                    document.getElementById('customerPhone').value = '';
+                }
+            }, 1000);
+        }
+        
+        function updateReportsDisplay() {
+            const now = new Date();
+            let filteredSales = [];
+            
+            // Filter sales based on period
+            if (currentReportPeriod === 'today') {
+                const today = now.toDateString();
+                filteredSales = salesData.filter(sale => new Date(sale.date).toDateString() === today);
+            } else if (currentReportPeriod === 'weekly') {
+                const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                filteredSales = salesData.filter(sale => new Date(sale.date) >= weekAgo);
+            } else if (currentReportPeriod === 'monthly') {
+                const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                filteredSales = salesData.filter(sale => new Date(sale.date) >= monthAgo);
+            }
+            
+            // Calculate totals
+            const totalSales = filteredSales.reduce((sum, sale) => sum + sale.total, 0);
+            const totalOrders = filteredSales.length;
+            
+            document.getElementById('totalSales').textContent = `₹${totalSales}`;
+            document.getElementById('totalOrders').textContent = totalOrders;
+            
+            // Calculate top items
+            const itemCounts = {};
+            filteredSales.forEach(sale => {
+                sale.items.forEach(item => {
+                    if (!itemCounts[item.name]) {
+                        itemCounts[item.name] = { quantity: 0, revenue: 0 };
+                    }
+                    itemCounts[item.name].quantity += item.quantity;
+                    itemCounts[item.name].revenue += item.price * item.quantity;
+                });
+            });
+            
+            const topItems = Object.entries(itemCounts)
+                .sort((a, b) => b[1].quantity - a[1].quantity)
+                .slice(0, 5);
+            
+            const topItemsHtml = topItems.length > 0 ? topItems.map(([name, data], index) => `
+                <div class="flex justify-between items-center p-2 bg-gray-50 rounded">
+                    <span class="text-sm font-medium">${index + 1}. ${name}</span>
+                    <div class="text-right">
+                        <div class="text-sm font-bold text-orange-600">${data.quantity} sold</div>
+                        <div class="text-xs text-gray-600">₹${data.revenue}</div>
+                    </div>
+                </div>
+            `).join('') : '<p class="text-gray-500 text-center py-4">No sales data available</p>';
+            
+            document.getElementById('topItems').innerHTML = topItemsHtml;
+            
+            // Update customer stats
+            const totalCustomers = Object.keys(customerData).length;
+            const repeatCustomers = Object.values(customerData).filter(customer => customer.totalOrders > 1).length;
+            
+            document.getElementById('totalCustomers').textContent = totalCustomers;
+            document.getElementById('repeatCustomers').textContent = repeatCustomers;
+            
+            // Update recent customers
+            const recentCustomers = Object.values(customerData)
+                .sort((a, b) => new Date(b.lastVisit || b.firstVisit) - new Date(a.lastVisit || a.firstVisit))
+                .slice(0, 10);
+            
+            const recentCustomersHtml = recentCustomers.length > 0 ? recentCustomers.map(customer => `
+                <div class="flex justify-between items-center p-2 bg-gray-50 rounded text-sm">
+                    <div>
+                        <div class="font-medium">${customer.name}</div>
+                        <div class="text-gray-600">${customer.phone}</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="font-bold text-green-600">₹${customer.totalSpent}</div>
+                        <div class="text-xs text-gray-600">${customer.totalOrders} orders</div>
+                    </div>
+                </div>
+            `).join('') : '<p class="text-gray-500 text-center py-4">No customer data available</p>';
+            
+            document.getElementById('recentCustomers').innerHTML = recentCustomersHtml;
+            
+            // Update sales table
+            updateSalesTable(filteredSales);
+        }
+        
+        function updateSalesTable(sales = salesData) {
+            const tableBody = document.getElementById('salesTableBody');
+            
+            if (sales.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="7" class="px-4 py-8 text-center text-gray-500">No sales data available</td></tr>';
+                return;
+            }
+            
+            tableBody.innerHTML = sales.map(sale => {
+                const orderTypeIcon = sale.orderType === 'dine-in' ? '🍽️' : 
+                                    sale.orderType === 'takeaway' ? '📦' : 
+                                    sale.orderType === 'delivery' ? '🚚' : '❓';
+                
+                return `
+                    <tr class="border-b border-gray-100">
+                        <td class="px-4 py-2">${sale.billNo}</td>
+                        <td class="px-4 py-2">${new Date(sale.date).toLocaleDateString()}</td>
+                        <td class="px-4 py-2">${sale.customerName}</td>
+                        <td class="px-4 py-2">${sale.customerPhone}</td>
+                        <td class="px-4 py-2">${orderTypeIcon} ${sale.orderType || 'dine-in'}</td>
+                        <td class="px-4 py-2">${sale.items.length} items</td>
+                        <td class="px-4 py-2 font-bold text-green-600">₹${sale.total}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+        
+        function filterSalesByDate() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            
+            if (!startDate || !endDate) {
+                alert('Please select both start and end dates');
+                return;
+            }
+            
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999); // Include the entire end date
+            
+            const filteredSales = salesData.filter(sale => {
+                const saleDate = new Date(sale.date);
+                return saleDate >= start && saleDate <= end;
+            });
+            
+            updateSalesTable(filteredSales);
+        }
+        
+        function exportToExcel() {
+            if (salesData.length === 0) {
+                alert('No sales data to export');
+                return;
+            }
+            
+            // Create CSV content
+            let csvContent = 'Bill No,Date,Customer Name,Phone,Order Type,Items,Total\n';
+            
+            salesData.forEach(sale => {
+                const itemsStr = sale.items.map(item => `${item.name} x${item.quantity}`).join('; ');
+                const orderType = sale.orderType || 'dine-in';
+                csvContent += `${sale.billNo},"${new Date(sale.date).toLocaleString()}","${sale.customerName}","${sale.customerPhone}","${orderType}","${itemsStr}",${sale.total}\n`;
+            });
+            
+            // Download CSV
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `biryani_adda_sales_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        function exportCustomerData() {
+            if (Object.keys(customerData).length === 0) {
+                alert('No customer data to export');
+                return;
+            }
+            
+            // Create CSV content
+            let csvContent = 'Name,Phone,First Visit,Last Visit,Total Orders,Total Spent\n';
+            
+            Object.values(customerData).forEach(customer => {
+                csvContent += `"${customer.name}","${customer.phone}","${new Date(customer.firstVisit).toLocaleString()}","${new Date(customer.lastVisit || customer.firstVisit).toLocaleString()}",${customer.totalOrders},${customer.totalSpent}\n`;
+            });
+            
+            // Download CSV
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `biryani_adda_customers_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Open table in new tab
+        function openTableTab(tableNumber) {
+            // Create URL with table parameter
+            const currentUrl = window.location.href.split('?')[0];
+            const tableUrl = `${currentUrl}?table=${tableNumber}`;
+            
+            // Open in new tab with specific name for the table
+            const newWindow = window.open(tableUrl, `BiryaniAdda_Table_${tableNumber}`, 'width=1200,height=800');
+            
+            // Focus the new window
+            if (newWindow) {
+                newWindow.focus();
+            }
+        }
+
+        // Show print preview
+        function showPrintPreview() {
+            if (currentBill.length === 0) {
+                alert('Please add items to the bill first!');
+                return;
+            }
+            
+            // Prepare bill data
+            prepareBillData();
+            
+            // Create preview content
+            const customerName = document.getElementById('customerName').value || 'Walk-in Customer';
+            const customerPhone = document.getElementById('customerPhone').value || 'N/A';
+            const orderType = document.getElementById('orderType').value;
+            const tableNumber = currentTable || document.getElementById('tableNumber')?.value;
+            const deliveryAddress = document.getElementById('deliveryAddress')?.value;
+            const total = currentBill.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            
+            const currentDate = new Date();
+            const dateStr = currentDate.toLocaleDateString('en-IN');
+            const timeStr = currentDate.toLocaleTimeString('en-IN', { hour12: true });
+            
+            const previewHtml = `
+                <div style="text-align: center; border-bottom: 1px dashed #000; padding-bottom: 8px; margin-bottom: 8px;">
+                    <div style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">BIRYANI ADDA</div>
+                    <div style="font-size: 9px; line-height: 1.2;">
+                        Shop no 1, Amar Gian Chs.<br>
+                        Opp. St. Workshop, Khopat<br>
+                        Thane Maharashtra - 400601<br>
+                        Ph: 8850227915 / 8652825607
+                    </div>
+                </div>
+                
+                <div style="margin: 8px 0; font-size: 10px;">
+                    <div style="border-bottom: 1px dashed #000; margin: 4px 0;"></div>
+                    <div><strong>Bill No:</strong> ${String(billCounter).padStart(4, '0')}</div>
+                    <div><strong>Date:</strong> ${dateStr} ${timeStr}</div>
+                    <div><strong>Customer:</strong> ${customerName}</div>
+                    <div><strong>Phone:</strong> ${customerPhone}</div>
+                    ${orderType === 'dine-in' && tableNumber ? `<div><strong>Table:</strong> ${tableNumber}</div>` : ''}
+                    ${orderType === 'delivery' && deliveryAddress ? `<div><strong>Address:</strong> ${deliveryAddress.substring(0, 35)}${deliveryAddress.length > 35 ? '...' : ''}</div>` : ''}
+                    <div><strong>Order Type:</strong> ${orderType.charAt(0).toUpperCase() + orderType.slice(1).replace('-', ' ')}</div>
+                </div>
+                
+                <div style="border-bottom: 1px dashed #000; padding-bottom: 8px; margin-bottom: 8px;">
+                    <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 10px; border-bottom: 1px solid #000; padding-bottom: 2px; margin-bottom: 4px;">
+                        <span>ITEM</span>
+                        <span style="width: 30px; text-align: center;">QTY</span>
+                        <span style="width: 50px; text-align: right;">AMOUNT</span>
+                    </div>
+                    ${currentBill.map(item => `
+                        <div style="display: flex; justify-content: space-between; margin: 3px 0; font-size: 10px;">
+                            <span style="flex: 1; padding-right: 8px;">${item.name}</span>
+                            <span style="width: 30px; text-align: center;">${item.quantity}</span>
+                            <span style="width: 50px; text-align: right; font-weight: bold;">₹${item.price * item.quantity}</span>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <div style="margin: 8px 0;">
+                    <div style="display: flex; justify-content: space-between; margin: 2px 0; font-size: 10px;">
+                        <span>Subtotal:</span>
+                        <span>₹${total}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 14px; font-weight: bold; border-top: 2px solid #000; border-bottom: 2px solid #000; padding: 4px 0; margin: 6px 0;">
+                        <span>TOTAL:</span>
+                        <span>₹${total}</span>
+                    </div>
+                </div>
+                
+                <div style="text-align: center; font-size: 9px; margin-top: 8px; border-top: 1px dashed #000; padding-top: 8px;">
+                    <div>Thank you for visiting!</div>
+                    <div>Date: ${dateStr} ${timeStr}</div>
+                    <div style="border-bottom: 1px dashed #000; margin: 4px 0;"></div>
+                    <div>Visit us again!</div>
+                </div>
+            `;
+            
+            document.getElementById('previewContent').innerHTML = previewHtml;
+            document.getElementById('printPreviewModal').classList.remove('hidden');
+        }
+
+        // Close print preview
+        function closePrintPreview() {
+            document.getElementById('printPreviewModal').classList.add('hidden');
+        }
+
+        // Print from preview
+        function printFromPreview() {
+            closePrintPreview();
+            printBill();
+        }
+
+        // Prepare bill data (extracted from printBill function)
+        function prepareBillData() {
+            const customerName = document.getElementById('customerName').value || 'Walk-in Customer';
+            const customerPhone = document.getElementById('customerPhone').value || 'N/A';
+            const orderType = document.getElementById('orderType').value;
+            const tableNumber = currentTable || document.getElementById('tableNumber')?.value;
+            const deliveryAddress = document.getElementById('deliveryAddress')?.value;
+            const total = currentBill.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            
+            // Update print bill content for professional POS format
+            const currentDate = new Date();
+            const dateStr = currentDate.toLocaleDateString('en-IN');
+            const timeStr = currentDate.toLocaleTimeString('en-IN', { hour12: true });
+            
+            document.getElementById('printCustomerInfo').innerHTML = `
+                <div class="pos-customer">
+                    <div class="pos-separator"></div>
+                    <div><strong>Bill No:</strong> ${String(billCounter).padStart(4, '0')}</div>
+                    <div><strong>Date:</strong> ${dateStr} ${timeStr}</div>
+                    <div><strong>Customer:</strong> ${customerName}</div>
+                    <div><strong>Phone:</strong> ${customerPhone}</div>
+                    ${orderType === 'dine-in' && tableNumber ? `<div><strong>Table:</strong> ${tableNumber}</div>` : ''}
+                    ${orderType === 'delivery' && deliveryAddress ? `<div><strong>Address:</strong> ${deliveryAddress.substring(0, 35)}${deliveryAddress.length > 35 ? '...' : ''}</div>` : ''}
+                    <div><strong>Order Type:</strong> ${orderType.charAt(0).toUpperCase() + orderType.slice(1).replace('-', ' ')}</div>
+                </div>
+            `;
+            
+            // Calculate subtotal and any taxes
+            const subtotal = total;
+            const taxRate = 0; // No tax for now, but structure is ready
+            const taxAmount = Math.round(subtotal * taxRate);
+            const grandTotal = subtotal + taxAmount;
+            
+            document.getElementById('printBillItems').innerHTML = `
+                <div class="pos-item-header">
+                    <span class="pos-item-name">ITEM</span>
+                    <span class="pos-item-qty">QTY</span>
+                    <span class="pos-item-price">AMOUNT</span>
+                </div>
+            ` + currentBill.map(item => `
+                <div class="pos-item">
+                    <span class="pos-item-name">${item.name}</span>
+                    <span class="pos-item-qty">${item.quantity}</span>
+                    <span class="pos-item-price">₹${item.price * item.quantity}</span>
+                </div>
+            `).join('');
+            
+            document.getElementById('printBillSummary').innerHTML = `
+                <div class="pos-subtotal">
+                    <div class="pos-total-line">
+                        <span>Subtotal:</span>
+                        <span>₹${subtotal}</span>
+                    </div>
+                    ${taxAmount > 0 ? `
+                    <div class="pos-total-line">
+                        <span>Tax (${(taxRate * 100).toFixed(1)}%):</span>
+                        <span>₹${taxAmount}</span>
+                    </div>
+                    ` : ''}
+                    <div class="pos-grand-total">
+                        <span>TOTAL:</span>
+                        <span>₹${grandTotal}</span>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('billDate').textContent = `${dateStr} ${timeStr}`;
+        }
+
+        // Report tab management
+        function showReportTab(tab) {
+            // Hide all report contents
+            document.getElementById('salesReportContent').classList.add('hidden');
+            document.getElementById('itemsReportContent').classList.add('hidden');
+            
+            // Show selected content
+            document.getElementById(tab + 'ReportContent').classList.remove('hidden');
+            
+            // Update tab styles
+            document.querySelectorAll('.report-tab').forEach(tabBtn => {
+                tabBtn.classList.remove('text-orange-600', 'border-b-2', 'border-orange-600');
+                tabBtn.classList.add('text-gray-500');
+            });
+            
+            document.getElementById(tab + 'ReportTab').classList.add('text-orange-600', 'border-b-2', 'border-orange-600');
+            document.getElementById(tab + 'ReportTab').classList.remove('text-gray-500');
+            
+            // Load data for the selected tab
+            if (tab === 'items') {
+                updateItemSalesReport();
+            }
+        }
+
+        // Item sales report functions
+        let currentItemSales = [];
+        let itemSortField = 'quantity';
+        let itemSortDirection = 'desc';
+
+        function updateItemSalesReport(filteredSales = null) {
+            const salesToAnalyze = filteredSales || salesData;
+            
+            // Calculate item sales data
+            const itemSalesMap = {};
+            const categoryMap = {};
+            
+            // Map items to categories
+            Object.entries(menuData).forEach(([category, items]) => {
+                items.forEach(item => {
+                    categoryMap[item.name] = category.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase());
+                });
+            });
+            
+            salesToAnalyze.forEach(sale => {
+                sale.items.forEach(item => {
+                    if (!itemSalesMap[item.name]) {
+                        itemSalesMap[item.name] = {
+                            name: item.name,
+                            category: categoryMap[item.name] || 'Other',
+                            quantity: 0,
+                            revenue: 0,
+                            orders: 0,
+                            price: item.price
+                        };
+                    }
+                    
+                    itemSalesMap[item.name].quantity += item.quantity;
+                    itemSalesMap[item.name].revenue += item.price * item.quantity;
+                    itemSalesMap[item.name].orders++;
+                });
+            });
+            
+            currentItemSales = Object.values(itemSalesMap);
+            
+            // Update summary cards
+            const totalItemsSold = currentItemSales.reduce((sum, item) => sum + item.quantity, 0);
+            const totalItemRevenue = currentItemSales.reduce((sum, item) => sum + item.revenue, 0);
+            const uniqueItemsCount = currentItemSales.length;
+            
+            document.getElementById('totalItemsSold').textContent = totalItemsSold;
+            document.getElementById('totalItemRevenue').textContent = `₹${totalItemRevenue}`;
+            document.getElementById('uniqueItemsCount').textContent = uniqueItemsCount;
+            
+            // Sort and display
+            sortItemTable(itemSortField, false);
+        }
+
+        function sortItemTable(field, toggleDirection = true) {
+            if (toggleDirection && field === itemSortField) {
+                itemSortDirection = itemSortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                itemSortField = field;
+                if (toggleDirection) itemSortDirection = 'desc';
+            }
+            
+            // Reset all sort indicators
+            ['Name', 'Category', 'Quantity', 'Price', 'Revenue', 'Orders'].forEach(col => {
+                const element = document.getElementById('sort' + col);
+                if (element) element.textContent = '↕️';
+            });
+            
+            // Set active sort indicator
+            const activeSort = document.getElementById('sort' + field.charAt(0).toUpperCase() + field.slice(1));
+            if (activeSort) {
+                activeSort.textContent = itemSortDirection === 'asc' ? '↑' : '↓';
+            }
+            
+            // Sort data
+            currentItemSales.sort((a, b) => {
+                let aVal = a[field];
+                let bVal = b[field];
+                
+                if (typeof aVal === 'string') {
+                    aVal = aVal.toLowerCase();
+                    bVal = bVal.toLowerCase();
+                }
+                
+                if (itemSortDirection === 'asc') {
+                    return aVal > bVal ? 1 : -1;
+                } else {
+                    return aVal < bVal ? 1 : -1;
+                }
+            });
+            
+            // Update table
+            displayItemSalesTable();
+        }
+
+        function displayItemSalesTable() {
+            const tableBody = document.getElementById('itemSalesTableBody');
+            
+            if (currentItemSales.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="7" class="px-4 py-8 text-center text-gray-500">No item sales data available</td></tr>';
+                return;
+            }
+            
+            tableBody.innerHTML = currentItemSales.map(item => {
+                const avgPerOrder = (item.quantity / item.orders).toFixed(1);
+                return `
+                    <tr class="border-b border-gray-100 hover:bg-gray-50">
+                        <td class="px-4 py-2 font-medium">${item.name}</td>
+                        <td class="px-4 py-2">
+                            <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">${item.category}</span>
+                        </td>
+                        <td class="px-4 py-2 font-bold text-blue-600">${item.quantity}</td>
+                        <td class="px-4 py-2">₹${item.price}</td>
+                        <td class="px-4 py-2 font-bold text-green-600">₹${item.revenue}</td>
+                        <td class="px-4 py-2">${item.orders}</td>
+                        <td class="px-4 py-2 text-gray-600">${avgPerOrder}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function filterItemSalesByDate() {
+            const startDate = document.getElementById('itemStartDate').value;
+            const endDate = document.getElementById('itemEndDate').value;
+            
+            if (!startDate || !endDate) {
+                alert('Please select both start and end dates');
+                return;
+            }
+            
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+            
+            const filteredSales = salesData.filter(sale => {
+                const saleDate = new Date(sale.date);
+                return saleDate >= start && saleDate <= end;
+            });
+            
+            updateItemSalesReport(filteredSales);
+        }
+
+        function exportItemSales() {
+            if (currentItemSales.length === 0) {
+                alert('No item sales data to export');
+                return;
+            }
+            
+            // Create CSV content
+            let csvContent = 'Item Name,Category,Quantity Sold,Unit Price,Total Revenue,Number of Orders,Average per Order\n';
+            
+            currentItemSales.forEach(item => {
+                const avgPerOrder = (item.quantity / item.orders).toFixed(1);
+                csvContent += `"${item.name}","${item.category}",${item.quantity},${item.price},${item.revenue},${item.orders},${avgPerOrder}\n`;
+            });
+            
+            // Download CSV
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `biryani_adda_item_sales_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Initialize with first category
+        document.addEventListener('DOMContentLoaded', function() {
+            showCategory('veg-starters');
+            
+            // Set bill counter from stored data
+            if (salesData.length > 0) {
+                billCounter = Math.max(...salesData.map(sale => sale.billNo)) + 1;
+            }
+            
+            // Set default dates for filtering
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('startDate').value = today;
+            document.getElementById('endDate').value = today;
+            document.getElementById('itemStartDate').value = today;
+            document.getElementById('itemEndDate').value = today;
+
+            // Update table indicators on load
+            updateTableButtons();
+            updateTableIndicator();
+
+            // Check if opened for specific table
+            const urlParams = new URLSearchParams(window.location.search);
+            const tableParam = urlParams.get('table');
+            if (tableParam) {
+                // Set order type to dine-in and pre-select table
+                document.getElementById('orderType').value = 'dine-in';
+                handleOrderTypeChange();
+                
+                // Auto-select the table
+                selectTable(parseInt(tableParam));
+                
+                // Update page title to show table number
+                document.title = `Biryani Adda - Table ${tableParam}`;
+                
+                // Add table-specific styling to header
+                const header = document.querySelector('.bg-gradient-to-r');
+                if (header) {
+                    const tableIndicator = document.createElement('div');
+                    tableIndicator.className = 'mt-2 text-orange-100 text-sm font-medium';
+                    tableIndicator.innerHTML = `🍽️ Currently Managing: Table ${tableParam}`;
+                    header.querySelector('.max-w-7xl').appendChild(tableIndicator);
+                }
+                
+                // Enable all printing functions for table tabs
+                window.isTableTab = true;
+                window.tableNumber = parseInt(tableParam);
+            }
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97fe313bb4beff7b',t:'MTc1ODAwMjkzOS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
